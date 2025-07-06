@@ -6,10 +6,6 @@ Key Features:
 - Secret modulus to determine bucket assignment
 - Validates EINs (accepts dashes, requires 9 digits)
 
-It reads configuration from two separate .env files:
-- `.env.main_key` should contain `MAIN_KEY=<hex string>`
-- `.env.main_modulus` should contain `MAIN_MODULUS=<integer>`
-- On first run, generates `.env.main_key` if missing
 
 EINs can be provided in formats with dashes (e.g., 12-3456789 or 123-45-6789),
 but any other non-numeric characters will raise an error.
@@ -36,94 +32,96 @@ Why this design makes sense:
    You can scale up by increasing the modulus or changing the HKDF info string (e.g., add a version tag).
    Supports key rotation and versioning without architectural change.
 
+---
+How to use
+~~~~~~~~~
+```python
+from vein_hasher import VEINHasher
+
+MAIN_KEY      = "4ab9e4…64_hex_chars…782d"   # 64-char hex string (256-bit)
+MAIN_MODULUS  = 9973                           # any positive int ≥ 2
+
+hashed = VEINHasher.hash( ein="12-3456789",
+                         main_key=MAIN_KEY,
+                         modulus=MAIN_MODULUS )
+print(hashed)
+```
+The `main_key` argument can be either a **bytes** object or a 64-hex-char
+string.  Supplying a modulus that is co-prime with neighbouring values
+(e.g. a large prime) helps distribute bucket IDs evenly.
 """
 
-import os
 import hmac
 import hashlib
-import secrets
+from typing import Union
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
+
 class VEINHasher:
-    @staticmethod
-    def _load_env_file(filepath: str) -> dict:
-        if not os.path.isfile(filepath):
-            raise FileNotFoundError(f"Required config file '{filepath}' not found.")
-        env_vars = {}
-        with open(filepath, 'r') as f:
-            for line in f:
-                if '=' in line:
-                    key, value = line.strip().split('=', 1)
-                    env_vars[key.strip()] = value.strip()
-        return env_vars
+    """Utility class – all methods are **@staticmethod** and keyword-only."""
 
+    # ----- EIN helpers ------------------------------------------------------
     @staticmethod
-    def _generate_main_key_file(filepath: str) -> bytes:
-        """
-        Generate a new secure main key and write it to the given .env file.
-        """
-        key = secrets.token_hex(32)  # 256-bit key = 64 hex characters
-        with open(filepath, 'w') as f:
-            f.write(f"MAIN_KEY={key}\n")
-        print(f"Generated new MAIN_KEY and saved to {filepath}")
-        return bytes.fromhex(key)
-
-    @staticmethod
-    def _load_main_key() -> bytes:
-        path = '.env.main_key'
-        if not os.path.isfile(path):
-            return VEINHasher._generate_main_key_file(path)
-
-        env = VEINHasher._load_env_file(path)
-        if 'MAIN_KEY' not in env:
-            raise EnvironmentError("MAIN_KEY not found in .env.main_key")
-        key_hex = env['MAIN_KEY']
-        if len(key_hex) < 64:
-            raise ValueError("MAIN_KEY must be at least 64 hex characters (256 bits)")
-        try:
-            return bytes.fromhex(key_hex)
-        except ValueError:
-            raise ValueError("MAIN_KEY must be a valid hex string")
-
-    @staticmethod
-    def _load_modulus() -> int:
-        env = VEINHasher._load_env_file('.env.main_modulus')
-        if 'MAIN_MODULUS' not in env:
-            raise EnvironmentError("MAIN_MODULUS not found in .env.main_modulus")
-        try:
-            return int(env['MAIN_MODULUS'])
-        except ValueError:
-            raise ValueError("MAIN_MODULUS must be an integer")
-
-    @staticmethod
-    def _normalize_ein(ein: str) -> str:
-        ein = ein.strip().replace('-', '')
-        if not ein.isdigit():
+    def _normalize_ein(*, ein: str) -> str:
+        """Return the EIN stripped of dashes and validated as 9 digits."""
+        cleaned = ein.strip().replace("-", "")
+        if not cleaned.isdigit():
             raise ValueError("EIN/TIN must contain only digits and optional dashes")
-        if len(ein) != 9:
+        if len(cleaned) != 9:
             raise ValueError("EIN/TIN must be exactly 9 digits after normalization")
-        return ein
+        return cleaned
 
+    # ----- HKDF salt derivation ---------------------------------------------
     @staticmethod
-    def _derive_salt(main_key: bytes, bucket_id: int) -> bytes:
+    def _derive_salt(*, main_key: bytes, bucket_id: int) -> bytes:
+        """Derive a deterministic 32-byte salt for the given bucket ID."""
         info = f"bucket-{bucket_id}".encode()
         hkdf = HKDF(
             algorithm=hashes.SHA256(),
             length=32,
             salt=None,
             info=info,
-            backend=default_backend()
+            backend=default_backend(),
         )
         return hkdf.derive(main_key)
 
+    # ----- Public API ------------------------------------------------------
     @staticmethod
-    def hash(ein: str) -> str:
-        ein = VEINHasher._normalize_ein(ein)
-        main_key = VEINHasher._load_main_key()
-        modulus = VEINHasher._load_modulus()
-        bucket_id = int(ein) % modulus
-        salt = VEINHasher._derive_salt(main_key, bucket_id)
-        h = hmac.new(salt, ein.encode(), hashlib.sha256)
-        return h.hexdigest()
+    def hash(*, ein: str, main_key: Union[bytes, str], modulus: int) -> str:
+        """Return a SHA-256 HMAC hex digest for the supplied EIN.
+
+        Parameters
+        ----------
+        ein : str
+            The Employer Identification Number (9 digits, dashes optional).
+        main_key : bytes | str
+            256-bit master key.  If a *str* is given it must be a 64-character
+            hexadecimal representation and will be converted to *bytes*.
+        modulus : int
+            Positive integer ≥ 2 used to assign rows to buckets
+            (`bucket_id = int(ein) % modulus`).
+        """
+        if modulus < 2:
+            raise ValueError("modulus must be ≥ 2")
+
+        # convert key if necessary
+        if isinstance(main_key, str):
+            try:
+                main_key_bytes = bytes.fromhex(main_key)
+            except ValueError as exc:
+                raise ValueError("main_key hex string is not valid hex") from exc
+        elif isinstance(main_key, (bytes, bytearray)):
+            main_key_bytes = bytes(main_key)
+        else:
+            raise TypeError("main_key must be bytes or 64-char hex string")
+
+        if len(main_key_bytes) < 32:  # 256 bits
+            raise ValueError("main_key must be at least 32 bytes (256 bits)")
+
+        normalized_ein = VEINHasher._normalize_ein(ein=ein)
+        bucket_id = int(normalized_ein) % modulus
+        salt = VEINHasher._derive_salt(main_key=main_key_bytes, bucket_id=bucket_id)
+        mac = hmac.new(salt, normalized_ein.encode(), hashlib.sha256)
+        return mac.hexdigest()
