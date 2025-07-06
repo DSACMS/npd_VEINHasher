@@ -74,9 +74,9 @@ class VEIN:
         if len(main_key_bytes) < 32:
             raise ValueError("main_key must be at least 32 bytes (256 bits)")
 
-        normalized_ein = VEINHasher._normalize_ein(ein=ein)
+        normalized_ein = VEIN._normalize_ein(ein=ein)
         bucket_id = int(normalized_ein) % modulus
-        salt = VEINHasher._derive_salt(main_key=main_key_bytes, bucket_id=bucket_id)
+        salt = VEIN._derive_salt(main_key=main_key_bytes, bucket_id=bucket_id)
         mac = hmac.new(salt, normalized_ein.encode(), hashlib.sha256)
         return mac.hexdigest()
 
@@ -91,7 +91,7 @@ class VEIN:
         ------
         ``VT_`` + 18 uppercase base‑36 characters (0‑9A‑Z).
         """
-        full_hash_hex = VEINHasher._hash(ein=ein, main_key=main_key, modulus=modulus)
+        full_hash_hex = VEIN._hash(ein=ein, main_key=main_key, modulus=modulus)
         partial_int   = int(full_hash_hex[:30], 16)  # first 15 bytes → int
-        base36        = VEINHasher._to_base36(n=partial_int).rjust(17, "0")[-17:]
+        base36        = VEIN._to_base36(n=partial_int).rjust(17, "0")[-17:]
         return "VT_" + base36
