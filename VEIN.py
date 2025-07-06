@@ -80,6 +80,10 @@ class VEIN:
         mac = hmac.new(salt, normalized_ein.encode(), hashlib.sha256)
         return mac.hexdigest()
 
+    @staticmethod
+    def passphrase_to_hex64(passphrase: str) -> str:
+        return hashlib.sha256(passphrase.encode("utf-8")).hexdigest()
+
     # ------------------------------------------------------------------
     # Public API: VT‑prefixed 20‑char identifier
     # ------------------------------------------------------------------

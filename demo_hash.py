@@ -1,7 +1,9 @@
 # demo_hash.py  – minimal example
 # from vein import VEIN
 
-MAIN_KEY     = "0123456789abcdef" * 4   # 64-char hex (256-bit) demo key
+
+demo_pass_phrase = "This is not the passphrase we will use in the production system"
+MAIN_KEY = VEIN.passphrase_to_hex64(demo_pass_phrase)
 MAIN_MODULUS = 9973                     # any integer ≥ 2
 DUMMY_EIN    = "12-3456789"
 
