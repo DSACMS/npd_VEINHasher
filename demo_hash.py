@@ -1,5 +1,5 @@
 # demo_hash.py  – minimal example
-from vein_hasher import VEINHasher
+# from vein_hasher import VEINHasher
 
 MAIN_KEY     = "0123456789abcdef" * 4   # 64-char hex (256-bit) demo key
 MAIN_MODULUS = 9973                     # any integer ≥ 2
@@ -11,4 +11,4 @@ hashed = VEINHasher.hash(
     modulus=MAIN_MODULUS,
 )
 
-print(f"{DUMMY_EIN}  →  {hashed}")
+print(f"dummy_ein: {DUMMY_EIN}  →  hash:{hashed}")
