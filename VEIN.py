@@ -89,9 +89,9 @@ class VEIN:
 
         Format
         ------
-        ``VT`` + 18 uppercase base‑36 characters (0‑9A‑Z).
+        ``VT_`` + 18 uppercase base‑36 characters (0‑9A‑Z).
         """
         full_hash_hex = VEINHasher._hash(ein=ein, main_key=main_key, modulus=modulus)
         partial_int   = int(full_hash_hex[:30], 16)  # first 15 bytes → int
-        base36        = VEINHasher._to_base36(n=partial_int).rjust(18, "0")[-18:]
-        return "VT" + base36
+        base36        = VEINHasher._to_base36(n=partial_int).rjust(17, "0")[-17:]
+        return "VT_" + base36
