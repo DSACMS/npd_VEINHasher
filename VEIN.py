@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
 
-class VEINHasher:
+class VEIN:
     """Utility class – only **VTIN_identifier** is part of the public API."""
 
     # ------------------------------------------------------------------
