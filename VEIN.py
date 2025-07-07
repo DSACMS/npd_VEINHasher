@@ -12,9 +12,9 @@ Updates in this revision
 import hmac
 import hashlib
 from typing import Union
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF # type: ignore
+from cryptography.hazmat.primitives import hashes # type: ignore
+from cryptography.hazmat.backends import default_backend # type: ignore
 
 
 class VEIN:
@@ -24,13 +24,23 @@ class VEIN:
     # Internal helpers (underscore‑prefixed)
     # ------------------------------------------------------------------
     @staticmethod
-    def _normalize_ein(*, ein: str) -> str:
-        cleaned = ein.strip().replace("-", "")
+    def _normalize_ein(*, ein: Union[str, int]) -> str:
+        # Convert to string and strip whitespace, then remove dashes
+        cleaned = str(ein).strip().replace("-", "")
+        
         if not cleaned.isdigit():
             raise ValueError("EIN/TIN must contain only digits and optional dashes")
-        if len(cleaned) != 9:
-            raise ValueError("EIN/TIN must be exactly 9 digits after normalization")
-        return cleaned
+        
+        # Check if it's exactly 9 digits
+        if len(cleaned) == 9:
+            return cleaned
+        
+        # For any other length, remove leading zeros and check if result is 9 digits
+        normalized = cleaned.lstrip('0')
+        if len(normalized) == 9:
+            return normalized
+        
+        raise ValueError("EIN/TIN must be exactly 9 digits after normalization")
 
     @staticmethod
     def _derive_salt(*, main_key: bytes, bucket_id: int) -> bytes:
@@ -56,7 +66,7 @@ class VEIN:
         return "".join(reversed(out))
 
     @staticmethod
-    def _hash(*, ein: str, main_key: Union[bytes, str], modulus: int) -> str:
+    def _hash(*, ein: Union[str, int], main_key: Union[bytes, str], modulus: int) -> str:
         """Return the full 64‑hex‑char SHA‑256 HMAC digest (internal use)."""
         if modulus < 2:
             raise ValueError("modulus must be ≥ 2")
@@ -88,7 +98,7 @@ class VEIN:
     # Public API: VT‑prefixed 20‑char identifier
     # ------------------------------------------------------------------
     @staticmethod
-    def VTIN_identifier(*, ein: str, main_key: Union[bytes, str], modulus: int) -> str:
+    def VTIN_identifier(*, ein: Union[str, int], main_key: Union[bytes, str], modulus: int) -> str:
         """Return a deterministic 20‑character alphanumeric ID starting with **VT**.
 
         Format
