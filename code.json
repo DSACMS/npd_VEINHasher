@@ -1,0 +1,73 @@
+{
+  "name": "npd_VEINHasher",
+  "description": "A project to generate a secure EIN hash",
+  "longDescription": " An EIN is an Employer Identification Number - a unique 9-digit federal tax identification number assigned by the IRS to businesses in the United States. This projects generates a secure hash from that EIN",
+  "status": "production",
+  "permissions": {
+    "licenses": [
+      {
+        "name": "CC0-1.0",
+        "URL": "https://github.com/DSACMS/npd_VEINHasher/blob/main/LICENSE"
+      }
+    ],
+    "usageType": "openSource",
+    "exemptionText": ""
+  },
+  "organization": "Centers for Medicare & Medicaid Services",
+  "repositoryURL": "https://github.com/DSACMS/npd_VEINHasher",
+  "projectURL": "",
+  "repositoryHost": "github.com/DSACMS",
+  "repositoryVisibility": "public",
+  "vcs": "git",
+  "laborHours": 1485,
+  "reuseFrequency": {
+    "forks": 0
+  },
+  "platforms": [
+    "windows",
+    "mac",
+    "linux"
+  ],
+  "categories": [
+    "application-development"
+  ],
+  "softwareType": "standalone/web",
+  "languages": [
+    "Python",
+    "Shell"
+  ],
+  "maintenance": "internal",
+  "contractNumber": "0",
+  "date": {
+    "created": "2025-07-22T18:46:40Z",
+    "lastModified": "2025-07-28T13:04:16Z",
+    "metaDataLastUpdated": "2025-07-30T14:30:36.948Z"
+  },
+  "tags": [
+    "EIN"
+  ],
+  "contact": {
+    "email": "opensource@cms.hhs.gov",
+    "name": "Remy DeCausemaker"
+  },
+  "feedbackMechanisms": [
+    "https://github.com/DSACMS/npd_VEINHasher/issues"
+  ],
+  "localisation": false,
+  "repositoryType": "tools",
+  "userInput": true,
+  "fismaLevel": "low",
+  "group": "CMS/OA/DSAC",
+  "projects": [
+    "N/A"
+  ],
+  "systems": [],
+  "upstream": "https://github.com/DSACMS/npd_VEINHasher/network/dependencies",
+  "subsetInHealthcare": [
+    "operational"
+  ],
+  "userType": [
+    "government"
+  ],
+  "maturityModelTier": 0
+}
