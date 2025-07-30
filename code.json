@@ -59,7 +59,7 @@
   "fismaLevel": "low",
   "group": "CMS/OA/DSAC",
   "projects": [
-    "N/A"
+    "National Provider Directory"
   ],
   "systems": [],
   "upstream": "https://github.com/DSACMS/npd_VEINHasher/network/dependencies",
