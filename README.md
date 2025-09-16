@@ -1,5 +1,9 @@
-# VEINHasher
-A project to generate a secure EIN hash
+# ![Beta](https://img.shields.io/badge/Status-Beta-red) VEINHasher
+A project to generate a secure EIN hash, which should result in a Virtual TIN or VTIN effect when used in combination with Personal NPIs which can be used in the place of other personal identifiers. 
+
+![Warning!](https://img.shields.io/badge/warning-yellow) This repo is not yet relied upon and should not be used in production code. This is privacy related code and as such will require extensive review before use. Do not use this code unless you understand all of the implications.
+
+Please feel free to open a ticket on this repo if you find a bug or problem with the code, or have a comment on the approach!
 
 ## About the Project
 
