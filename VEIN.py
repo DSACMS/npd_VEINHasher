@@ -46,8 +46,8 @@ class VEIN:
     def _derive_salt(*, main_key: bytes, bucket_id: int) -> bytes:
         info = f"bucket-{bucket_id}".encode()
         hkdf = HKDF(
-            algorithm=hashes.SHA256(),
-            length=32,
+            algorithm=hashes.SHA512(),
+            length=512,
             salt=None,
             info=info,
             backend=default_backend(),
@@ -67,7 +67,7 @@ class VEIN:
 
     @staticmethod
     def _hash(*, ein: Union[str, int], main_key: Union[bytes, str], modulus: int) -> str:
-        """Return the full 64‑hex‑char SHA‑256 HMAC digest (internal use)."""
+        """Return the full 128‑hex‑char SHA‑512 HMAC digest (internal use)."""
         if modulus < 2:
             raise ValueError("modulus must be ≥ 2")
 
@@ -87,23 +87,24 @@ class VEIN:
         normalized_ein = VEIN._normalize_ein(ein=ein)
         bucket_id = int(normalized_ein) % modulus
         salt = VEIN._derive_salt(main_key=main_key_bytes, bucket_id=bucket_id)
-        mac = hmac.new(salt, normalized_ein.encode(), hashlib.sha256)
+        mac = hmac.new(salt, normalized_ein.encode(), hashlib.sha512)
         return mac.hexdigest()
 
     @staticmethod
     def passphrase_to_hex64(passphrase: str) -> str:
-        return hashlib.sha256(passphrase.encode("utf-8")).hexdigest()
+        return hashlib.sha512(passphrase.encode("utf-8")).hexdigest()
 
     # ------------------------------------------------------------------
-    # Public API: VT‑prefixed 20‑char identifier
+    # Public API: VT‑prefixed 131‑char identifier
     # ------------------------------------------------------------------
     @staticmethod
     def VTIN_identifier(*, ein: Union[str, int], main_key: Union[bytes, str], modulus: int) -> str:
-        """Return a deterministic 20‑character alphanumeric ID starting with **VT**.
+        """Return a deterministic 131‑character alphanumeric ID starting with **VT**.
+        TODO THis should return a 128 character SHA512 hash
 
         Format
         ------
-        ``VT_`` + 18 uppercase base‑36 characters (0‑9A‑Z).
+        ``VT_`` + 128 uppercase base‑36 characters (0‑9A‑Z). 
         """
         full_hash_hex = VEIN._hash(ein=ein, main_key=main_key, modulus=modulus)
         partial_int   = int(full_hash_hex[:30], 16)  # first 15 bytes → int
